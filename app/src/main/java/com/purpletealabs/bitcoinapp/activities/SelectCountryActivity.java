@@ -5,8 +5,10 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 
 import com.purpletealabs.bitcoinapp.R;
 import com.purpletealabs.bitcoinapp.adapters.CountryListAdapter;
@@ -22,6 +24,8 @@ public class SelectCountryActivity extends BaseActivity implements ICurrencyData
     public static final String EXTRA_SELECTED_CURRENCY = "currency";
 
     private SelectCountryViewModel mViewModel;
+
+    private ICurrencyDataSource mDataSource;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,9 +45,10 @@ public class SelectCountryActivity extends BaseActivity implements ICurrencyData
     }
 
     private void getCountryList() {
-        mViewModel.isLoadingData.postValue(true);
-        ICurrencyDataSource ds = new CurrencyDataSourceNetwork();
-        ds.getSupportedCurrencies(this);
+        mViewModel.isLoadingData.set(true);
+        if (mDataSource == null)
+            mDataSource = new CurrencyDataSourceNetwork();
+        mDataSource.getSupportedCurrencies(this);
     }
 
     private void setupToolbar() {
@@ -57,6 +62,7 @@ public class SelectCountryActivity extends BaseActivity implements ICurrencyData
 
     private void initViews(ActivitySelectCountryBinding binding) {
         binding.rvCountryList.setLayoutManager(new LinearLayoutManager(this));
+        binding.rvCountryList.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         CountryListAdapter adapter = new CountryListAdapter(mViewModel.countries, this);
         binding.rvCountryList.setAdapter(adapter);
     }
@@ -64,13 +70,13 @@ public class SelectCountryActivity extends BaseActivity implements ICurrencyData
 
     @Override
     public void getCurrenciesFailure() {
-        mViewModel.isLoadingData.postValue(false);
+        mViewModel.isLoadingData.set(false);
         mViewModel.countries.clear();
     }
 
     @Override
     public void getCurrenciesResult(List<Currency> countries) {
-        mViewModel.isLoadingData.postValue(false);
+        mViewModel.isLoadingData.set(false);
         mViewModel.countries.clear();
         mViewModel.countries.addAll(countries);
     }
@@ -81,5 +87,23 @@ public class SelectCountryActivity extends BaseActivity implements ICurrencyData
         resultIntent.putExtra(EXTRA_SELECTED_CURRENCY, currency.getCurrency());
         setResult(RESULT_OK, resultIntent);
         finish();
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mDataSource != null)
+            mDataSource.cancelCalls();
+        super.onDestroy();
     }
 }

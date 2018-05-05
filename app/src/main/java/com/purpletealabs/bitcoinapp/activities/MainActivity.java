@@ -1,10 +1,10 @@
 package com.purpletealabs.bitcoinapp.activities;
 
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -17,7 +17,6 @@ import com.purpletealabs.bitcoinapp.datasource.PriceDataSourceNetwork;
 import com.purpletealabs.bitcoinapp.dtos.Price;
 import com.purpletealabs.bitcoinapp.viewmodels.MainActivityViewModel;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends BaseActivity implements IPriceDataSource.Callback {
@@ -28,7 +27,7 @@ public class MainActivity extends BaseActivity implements IPriceDataSource.Callb
 
     private String mSelectedCurrency;
 
-    private List<Price> defaultPrices = new ArrayList<>();
+    private IPriceDataSource mDataSource;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,13 +43,18 @@ public class MainActivity extends BaseActivity implements IPriceDataSource.Callb
 
         initViews(binding);
 
-        getDefaultPriceList();
+        if (mViewModel.prices.isEmpty()) {
+            getDefaultPriceList();
+        } else {
+            mViewModel.isLoadingData.set(false);
+        }
     }
 
     private void getDefaultPriceList() {
-        mViewModel.isLoadingData.postValue(true);
-        IPriceDataSource pds = new PriceDataSourceNetwork();
-        pds.getDefaultPriceList(this);
+        mViewModel.isLoadingData.set(true);
+        if (mDataSource == null)
+            mDataSource = new PriceDataSourceNetwork();
+        mDataSource.getDefaultPriceList(this);
     }
 
     private void setupToolbar() {
@@ -60,6 +64,7 @@ public class MainActivity extends BaseActivity implements IPriceDataSource.Callb
 
     private void initViews(ActivityMainBinding binding) {
         binding.rvPrices.setLayoutManager(new LinearLayoutManager(this));
+        binding.rvPrices.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         PriceListAdapter adapter = new PriceListAdapter(mViewModel.prices);
         binding.rvPrices.setAdapter(adapter);
     }
@@ -83,38 +88,48 @@ public class MainActivity extends BaseActivity implements IPriceDataSource.Callb
     }
 
     private void getPricesForSelectedCurrency() {
-        mViewModel.isLoadingData.postValue(true);
-        IPriceDataSource pds = new PriceDataSourceNetwork();
-        pds.getPriceForCurrency(mSelectedCurrency, this);
+        mViewModel.isLoadingData.set(true);
+        if (mDataSource == null)
+            mDataSource = new PriceDataSourceNetwork();
+        mDataSource.getPriceForCurrency(mSelectedCurrency, this);
     }
 
     @Override
     public void onGetDefaultPriceResult(List<Price> prices) {
-        mViewModel.isLoadingData.postValue(false);
-        defaultPrices.addAll(prices);
+        mViewModel.defaultPrices.clear();
+        mViewModel.defaultPrices.addAll(prices);
         mViewModel.prices.clear();
-        mViewModel.prices.addAll(defaultPrices);
+        mViewModel.prices.addAll(mViewModel.defaultPrices);
+        mViewModel.isLoadingData.set(false);
     }
 
     @Override
     public void onGetDefaultPriceFailure() {
-        mViewModel.isLoadingData.postValue(false);
+        mViewModel.isLoadingData.set(false);
         mViewModel.prices.clear();
         showSnackBar(getString(R.string.generic_error));
     }
 
     @Override
     public void onGetCurrencyPriceResult(Price price) {
-        mViewModel.isLoadingData.postValue(false);
         mViewModel.prices.clear();
         mViewModel.prices.add(price);
-        mViewModel.prices.addAll(defaultPrices);
+        mViewModel.prices.addAll(mViewModel.defaultPrices);
+        mViewModel.isLoadingData.set(false);
     }
 
     @Override
     public void onGetCurrencyPriceFailure() {
-        mViewModel.isLoadingData.postValue(false);
+        mViewModel.isLoadingData.set(false);
         mViewModel.prices.clear();
         showSnackBar(getString(R.string.generic_error));
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        if (mDataSource != null)
+            mDataSource.cancelCalls();
+        super.onDestroy();
     }
 }

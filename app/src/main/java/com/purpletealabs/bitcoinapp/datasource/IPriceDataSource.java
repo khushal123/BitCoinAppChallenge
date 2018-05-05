@@ -5,6 +5,8 @@ import com.purpletealabs.bitcoinapp.dtos.Price;
 import java.util.List;
 
 public interface IPriceDataSource {
+    void cancelCalls();
+
     interface Callback {
         void onGetDefaultPriceResult(List<Price> prices);
 

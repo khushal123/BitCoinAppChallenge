@@ -18,11 +18,7 @@
         tools:context=".activities.MainActivity">
 
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical">
+        <LinearLayout style="@style/vertical_linear_layout">
 
             <android.support.design.widget.AppBarLayout
                 android:layout_width="match_parent"
@@ -38,14 +34,17 @@
 
             </android.support.design.widget.AppBarLayout>
 
-            <ProgressBar
-                style="@style/progress_bar_style"
-                android:visibility="@{vm.isLoadingData ? View.VISIBLE : View.GONE}" />
+            <LinearLayout style="@style/vertical_linear_layout">
 
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/rv_prices"
-                style="@style/rv_style"
-                android:visibility="@{vm.isLoadingData ? View.GONE : View.VISIBLE}" />
+                <ProgressBar
+                    style="@style/progress_bar_style"
+                    android:visibility="@{vm.isLoadingData ? View.VISIBLE : View.GONE}" />
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/rv_prices"
+                    style="@style/rv_style"
+                    android:visibility="@{vm.isLoadingData ? View.GONE : View.VISIBLE}" />
+            </LinearLayout>
         </LinearLayout>
 
         <android.support.design.widget.FloatingActionButton
