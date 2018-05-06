@@ -65,7 +65,7 @@ public class MainActivity extends BaseActivity implements IPriceDataSource.Callb
     private void initViews(ActivityMainBinding binding) {
         binding.rvPrices.setLayoutManager(new LinearLayoutManager(this));
         binding.rvPrices.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
-        PriceListAdapter adapter = new PriceListAdapter(mViewModel.prices);
+        PriceListAdapter adapter = new PriceListAdapter(this, mViewModel.prices);
         binding.rvPrices.setAdapter(adapter);
     }
 

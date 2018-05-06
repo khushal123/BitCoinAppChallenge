@@ -63,7 +63,7 @@ public class SelectCountryActivity extends BaseActivity implements ICurrencyData
     private void initViews(ActivitySelectCountryBinding binding) {
         binding.rvCountryList.setLayoutManager(new LinearLayoutManager(this));
         binding.rvCountryList.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
-        CountryListAdapter adapter = new CountryListAdapter(mViewModel.countries, this);
+        CountryListAdapter adapter = new CountryListAdapter(this, mViewModel.countries, this);
         binding.rvCountryList.setAdapter(adapter);
     }
 

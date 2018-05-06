@@ -1,6 +1,7 @@
 package com.purpletealabs.bitcoinapp.datasource;
 
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.purpletealabs.bitcoinapp.apis.CoinDeskServiceFactory;
@@ -38,6 +39,7 @@ public class PriceDataSourceNetwork implements IPriceDataSource {
                 if (!call.isCanceled()) {
                     if (response.isSuccessful()) {
                         DefaultPriceListResponse dpl = response.body();
+                        Log.e("data", "JSONDATA----->>>"+ new Gson().toJson(dpl));
                         List<Price> prices = new ArrayList<>();
                         prices.add(dpl.getBpi().getUsdPrice());
                         prices.add(dpl.getBpi().getGbpPrice());

@@ -1,5 +1,6 @@
 package com.purpletealabs.bitcoinapp.adapters;
 
+import android.content.Context;
 import android.databinding.ObservableArrayList;
 import android.databinding.ObservableList;
 import android.support.annotation.NonNull;
@@ -15,8 +16,9 @@ import com.purpletealabs.bitcoinapp.viewmodels.CountryViewModel;
 public class CountryListAdapter extends RecyclerView.Adapter<CountryListAdapter.ViewHolder> {
     private final ObservableArrayList<Currency> countries;
     private final ClickListener listener;
-
-    public CountryListAdapter(ObservableArrayList<Currency> countries, ClickListener listener) {
+    Context context;
+    public CountryListAdapter(Context context, ObservableArrayList<Currency> countries, ClickListener listener) {
+        this.context = context;
         this.countries = countries;
         this.listener = listener;
         this.countries.addOnListChangedCallback(new ObservableList.OnListChangedCallback<ObservableList<Currency>>() {
@@ -56,7 +58,10 @@ public class CountryListAdapter extends RecyclerView.Adapter<CountryListAdapter.
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         final Currency currency = countries.get(position);
-        holder.binding.setVm(new CountryViewModel(currency.getCurrency(), currency.getCountry()));
+        String filename = "_"+currency.getCurrency().toLowerCase();
+        int resID = context.getResources().getIdentifier(filename , "drawable", context.getPackageName());
+        holder.binding.setVm(new CountryViewModel(currency.getCurrency(), currency.getCountry(), resID));
+        holder.binding.executePendingBindings();
     }
 
     @Override

@@ -11,16 +11,27 @@
     </data>
 
     <LinearLayout
-        style="@style/row_style"
-        android:background="?attr/selectableItemBackground"
-        android:orientation="vertical">
+        android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:layout_height="wrap_content">
 
-        <TextView
-            style="@style/primary_text_view"
-            android:text="@{vm.code}" />
+        <ImageView
+            android:layout_width="50dp"
+            android:src="@{vm.drawable}"
+            android:layout_height="50dp" />
+        <LinearLayout
+            style="@style/row_style"
+            android:background="?attr/selectableItemBackground"
+            android:orientation="vertical">
 
-        <TextView
-            style="@style/secondary_text_view"
-            android:text="@{vm.name}" />
+            <TextView
+                style="@style/primary_text_view"
+                android:text="@{vm.code}" />
+
+            <TextView
+                style="@style/secondary_text_view"
+                android:text="@{vm.name}" />
+        </LinearLayout>
     </LinearLayout>
+
 </layout>
