@@ -16,89 +16,89 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Response;
+import rx.schedulers.Schedulers;
 
 public class PriceDataSourceNetwork implements IPriceDataSource {
-    private List<Call> mCalls;
+    CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-    public PriceDataSourceNetwork() {
-        this.mCalls = new ArrayList<>();
+    @Override
+    public void cancel() {
+        unSubscribeFromObservable();
+        compositeDisposable = null;
     }
+
+    private void unSubscribeFromObservable() {
+        if (compositeDisposable != null && !compositeDisposable.isDisposed()) {
+            compositeDisposable.dispose();
+        }
+    }
+
 
     @Override
     public void getDefaultPriceList(final Callback callback) {
         ICoinDeskService service = CoinDeskServiceFactory.newServiceInstance();
-
-        Call<DefaultPriceListResponse> call = service.getDefaultPriceList();
-
-        call.enqueue(new retrofit2.Callback<DefaultPriceListResponse>() {
+        Observable<DefaultPriceListResponse> call = service.getDefaultPriceList();
+        Disposable disposable = call.subscribeOn(io.reactivex.schedulers.Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer<DefaultPriceListResponse>() {
             @Override
-            public void onResponse(@NonNull Call<DefaultPriceListResponse> call, @NonNull Response<DefaultPriceListResponse> response) {
-                if (!call.isCanceled()) {
-                    if (response.isSuccessful()) {
-                        DefaultPriceListResponse dpl = response.body();
-                        Log.e("data", "JSONDATA----->>>"+ new Gson().toJson(dpl));
-                        List<Price> prices = new ArrayList<>();
-                        prices.add(dpl.getBpi().getUsdPrice());
-                        prices.add(dpl.getBpi().getGbpPrice());
-                        prices.add(dpl.getBpi().getEurPrice());
-                        callback.onGetDefaultPriceResult(prices);
+            public void accept(DefaultPriceListResponse defaultPriceListResponse) throws Exception {
+                if (defaultPriceListResponse != null) {
+                    List<Price> prices = new ArrayList<>();
+                    prices.add(defaultPriceListResponse.getBpi().getUsdPrice());
+                    prices.add(defaultPriceListResponse.getBpi().getGbpPrice());
+                    prices.add(defaultPriceListResponse.getBpi().getEurPrice());
+                    callback.onGetDefaultPriceResult(prices);
 
-                    } else {
-                        callback.onGetDefaultPriceFailure();
-                    }
+                } else {
+                    callback.onGetDefaultPriceFailure();
                 }
             }
-
+        }, new Consumer<Throwable>() {
             @Override
-            public void onFailure(@NonNull Call<DefaultPriceListResponse> call, @NonNull Throwable t) {
-                if (!call.isCanceled())
-                    callback.onGetDefaultPriceFailure();
+            public void accept(Throwable throwable) throws Exception {
+                callback.onGetDefaultPriceFailure();
             }
         });
-        mCalls.add(call);
+        compositeDisposable.add(disposable);
     }
 
     @Override
     public void getPriceForCurrency(final String currencyCode, final Callback callback) {
         ICoinDeskService service = CoinDeskServiceFactory.newServiceInstance();
-        Call<ResponseBody> call = service.getPriceForCountry(currencyCode);
-        call.enqueue(new retrofit2.Callback<ResponseBody>() {
+        final Observable<ResponseBody> call = service.getPriceForCountry(currencyCode);
+        Disposable disposable = call.subscribeOn(io.reactivex.schedulers.Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer<ResponseBody>() {
             @Override
-            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                if (!call.isCanceled()) {
-                    if (response.isSuccessful()) {
-                        try {
-                            String jsonResponse = response.body().string();
-                            JSONObject obj = new JSONObject(jsonResponse);
-                            Price price = new Gson().fromJson(obj.getJSONObject("bpi").getString(currencyCode), Price.class);
-                            callback.onGetCurrencyPriceResult(price);
+            public void accept(ResponseBody responseBody) throws Exception {
+                if (responseBody != null) {
+                    try {
+                        String jsonResponse = responseBody.string();
+                        JSONObject obj = new JSONObject(jsonResponse);
+                        Price price = new Gson().fromJson(obj.getJSONObject("bpi").getString(currencyCode), Price.class);
+                        callback.onGetCurrencyPriceResult(price);
 
-                        } catch (IOException | JSONException e) {
-                            callback.onGetCurrencyPriceFailure();
-                        }
-                    } else {
+                    } catch (IOException | JSONException e) {
                         callback.onGetCurrencyPriceFailure();
                     }
-                }
-                mCalls.remove(call);
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
-                if (!call.isCanceled())
+                } else {
                     callback.onGetCurrencyPriceFailure();
-                mCalls.remove(call);
+                }
+            }
+        }, new Consumer<Throwable>() {
+            @Override
+            public void accept(Throwable throwable) throws Exception {
+                callback.onGetCurrencyPriceFailure();
             }
         });
-        mCalls.add(call);
+        compositeDisposable.add(disposable);
     }
 
-    @Override
-    public void cancelCalls() {
-        for (Call call : mCalls)
-            call.cancel();
-    }
+
 }

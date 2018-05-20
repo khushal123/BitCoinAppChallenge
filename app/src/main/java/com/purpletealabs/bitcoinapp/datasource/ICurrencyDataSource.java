@@ -5,8 +5,7 @@ import com.purpletealabs.bitcoinapp.dtos.Currency;
 import java.util.List;
 
 public interface ICurrencyDataSource {
-    void cancelCalls();
-
+    void cancel();
     interface Callback {
         void getCurrenciesFailure();
 

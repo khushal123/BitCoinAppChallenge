@@ -103,7 +103,7 @@ public class SelectCountryActivity extends BaseActivity implements ICurrencyData
     @Override
     protected void onDestroy() {
         if (mDataSource != null)
-            mDataSource.cancelCalls();
+            mDataSource.cancel();
         super.onDestroy();
     }
 }

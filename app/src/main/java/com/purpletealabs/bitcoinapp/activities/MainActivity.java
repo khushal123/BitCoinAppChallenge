@@ -4,6 +4,7 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.Toolbar;
@@ -32,6 +33,19 @@ public class MainActivity extends BaseActivity implements IPriceDataSource.Callb
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                .detectDiskReads()
+                .detectDiskWrites()
+                .detectNetwork()
+                .penaltyLog()
+                .build());
+        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                .detectLeakedSqlLiteObjects()
+                .detectLeakedClosableObjects()
+                .penaltyLog()
+                .penaltyDeath()
+                .build());
+
 
         ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
@@ -128,8 +142,7 @@ public class MainActivity extends BaseActivity implements IPriceDataSource.Callb
 
     @Override
     protected void onDestroy() {
-        if (mDataSource != null)
-            mDataSource.cancelCalls();
         super.onDestroy();
+        mDataSource.cancel();
     }
 }
